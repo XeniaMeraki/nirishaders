@@ -1,0 +1,103 @@
+animations {
+    // Diamond reveal opening animation
+    window-open {
+        duration-ms 400
+        curve "cubic-bezier" 0.25 1 0.5 1
+        custom-shader r"
+
+        bool is_in_diamond(float p, float x, float y, float cx, float cy) {
+            return (
+                x <  y + p + cx - cy &&
+                x > -y - p + cx + cy &&
+                x >  y - p + cx - cy &&
+                x < -y + p + cx + cy
+            );
+        }
+
+        vec4 open_color(vec3 coords_geo, vec3 size_geo) {
+            vec3 coords_tex = niri_geo_to_tex * coords_geo;
+            vec4 color = texture2D(niri_tex, coords_tex.st);
+
+            // Pixel-space coordinates
+            vec2 coords = coords_geo.xy * size_geo.xy;
+
+            float border = 4.0;
+
+            // Window center
+            vec2 c = size_geo.xy * 0.5;
+
+            // Expansion radius
+            float p = niri_clamped_progress * max(size_geo.x, size_geo.y);
+
+            float x = coords.x;
+            float y = coords.y;
+
+            // Outside diamond: fully transparent
+            if (!is_in_diamond(p, x, y, c.x, c.y)) {
+                color = vec4(0.0);
+            }
+            // Border highlight
+            else if (
+                (!is_in_diamond(p, x - border, y - border, c.x, c.y) ||
+                 !is_in_diamond(p, x + border, y - border, c.x, c.y) ||
+                 !is_in_diamond(p, x - border, y + border, c.x, c.y) ||
+                 !is_in_diamond(p, x + border, y + border, c.x, c.y)) &&
+                x >= 0.0 && y >= 0.0 &&
+                x <= size_geo.x && y <= size_geo.y
+            ) {
+                color = vec4(0.4, 0.0, 0.2, 1.0);
+            }
+
+            return color;
+        }"
+    }
+
+    // Diamond closing animation
+    window-close {
+        duration-ms 400
+        curve "cubic-bezier" 0.25 1 0.5 1
+        custom-shader r"
+
+        bool is_in_diamond(float p, float x, float y, float cx, float cy) {
+            return (
+                x <  y + p + cx - cy &&
+                x > -y - p + cx + cy &&
+                x >  y - p + cx - cy &&
+                x < -y + p + cx + cy
+            );
+        }
+
+        vec4 close_color(vec3 coords_geo, vec3 size_geo) {
+            vec3 coords_tex = niri_geo_to_tex * coords_geo;
+            vec4 color = texture2D(niri_tex, coords_tex.st);
+
+            vec2 coords = coords_geo.xy * size_geo.xy;
+
+            float border = 4.0;
+            vec2 c = size_geo.xy * 0.5;
+
+            // Reverse progress for closing
+            float p = (1.0 - niri_clamped_progress) * max(size_geo.x, size_geo.y);
+
+            float x = coords.x;
+            float y = coords.y;
+
+            if (!is_in_diamond(p, x, y, c.x, c.y)) {
+                color = vec4(0.0);
+            }
+            else if (
+                (!is_in_diamond(p, x - border, y - border, c.x, c.y) ||
+                 !is_in_diamond(p, x + border, y - border, c.x, c.y) ||
+                 !is_in_diamond(p, x - border, y + border, c.x, c.y) ||
+                 !is_in_diamond(p, x + border, y + border, c.x, c.y)) &&
+                x >= 0.0 && y >= 0.0 &&
+                x <= size_geo.x && y <= size_geo.y
+            ) {
+                color = vec4(0.4, 0.0, 0.2, 1.0);
+            }
+
+            return color;
+        }"
+    }
+}
+
